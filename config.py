@@ -1,4 +1,4 @@
 import os
 
-TOKEN = os.getenv("TOKEN")
+TOKEN = os.getenv("8761803905:AAFdKpuvFlMLsfVieetWbAs7MzIp0_5MUCM")
 ADMIN_ID = 123456789
