@@ -1,33 +1,18 @@
 import yt_dlp
 
 def download_video(url):
-    options = {
+
+    ydl_opts = {
         "format": "best",
-        "outtmpl": "video.%(ext)s"
+        "outtmpl": "video.%(ext)s",
+        "noplaylist": True,
+        "quiet": True
     }
 
     try:
-        with yt_dlp.YoutubeDL(options) as ydl:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=True)
             return ydl.prepare_filename(info)
-    except:
-        return None
-
-
-def download_audio(url):
-    options = {
-        "format": "bestaudio/best",
-        "outtmpl": "audio.%(ext)s",
-        "postprocessors": [{
-            "key": "FFmpegExtractAudio",
-            "preferredcodec": "mp3",
-            "preferredquality": "192"
-        }]
-    }
-
-    try:
-        with yt_dlp.YoutubeDL(options) as ydl:
-            info = ydl.extract_info(url, download=True)
-            return ydl.prepare_filename(info)
-    except:
+    except Exception as e:
+        print(e)
         return None
