@@ -3,12 +3,13 @@ from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, fil
 from downloader import download_video, download_audio
 from config import TOKEN
 
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "Salom 👋\n\n"
         "Link yuboring:\n"
         "YouTube / Instagram / TikTok\n\n"
-        "🎬 Video yoki 🎵 MP3 yuklab beraman."
+        "🎬 Video va 🎵 MP3 yuklab beraman."
     )
 
 
@@ -17,27 +18,37 @@ async def handle_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text("⏳ Yuklanmoqda...")
 
-    file = download_video(url)
+    # VIDEO
+    video_file = download_video(url)
 
-    if file:
-        await update.message.reply_video(video=open(file, "rb"))
+    if video_file:
+        await update.message.reply_video(video=open(video_file, "rb"))
     else:
-        await update.message.reply_text("❌ Yuklab bo‘lmadi")
+        await update.message.reply_text("❌ Video yuklab bo‘lmadi")
+        return
+
+    # AUDIO
+    audio_file = download_audio(url)
+
+    if audio_file:
+        await update.message.reply_audio(audio=open(audio_file, "rb"))
+    else:
+        await update.message.reply_text("❌ MP3 yuklab bo‘lmadi")
 
 
 async def mp3(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args:
-        await update.message.reply_text("Link yozing: /mp3 link")
+        await update.message.reply_text("Link yozing:\n/mp3 link")
         return
 
     url = context.args[0]
 
     await update.message.reply_text("🎵 MP3 tayyorlanmoqda...")
 
-    file = download_audio(url)
+    audio_file = download_audio(url)
 
-    if file:
-        await update.message.reply_audio(audio=open(file, "rb"))
+    if audio_file:
+        await update.message.reply_audio(audio=open(audio_file, "rb"))
     else:
         await update.message.reply_text("❌ MP3 yuklab bo‘lmadi")
 
@@ -46,6 +57,6 @@ app = ApplicationBuilder().token(TOKEN).build()
 
 app.add_handler(CommandHandler("start", start))
 app.add_handler(CommandHandler("mp3", mp3))
-app.add_handler(MessageHandler(filters.TEXT, handle_link))
+app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_link))
 
 app.run_polling()
