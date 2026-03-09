@@ -1,1 +1,1 @@
-# telegram-media-downloader-bot
+telegram-pro-downloader-bot
