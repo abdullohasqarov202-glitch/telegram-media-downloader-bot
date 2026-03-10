@@ -6,12 +6,19 @@ def download_video(url):
     filename = f"video_{uuid.uuid4().hex}.%(ext)s"
 
     ydl_opts = {
-        "format": "bv*[ext=mp4]+ba/b[ext=mp4]/best",
+        "format": "best",
         "outtmpl": filename,
-        "noplaylist": True,
         "quiet": True,
+        "noplaylist": True,
         "nocheckcertificate": True,
-        "ignoreerrors": True
+        "ignoreerrors": True,
+        "cookiefile": "cookies.txt",
+
+        "extractor_args": {
+            "youtube": {
+                "player_client": ["android"]
+            }
+        }
     }
 
     try:
@@ -21,8 +28,7 @@ def download_video(url):
             if not info:
                 return None
 
-            file = ydl.prepare_filename(info)
-            return file
+            return ydl.prepare_filename(info)
 
     except Exception as e:
         print(e)
@@ -34,10 +40,11 @@ def download_audio(url):
     filename = f"audio_{uuid.uuid4().hex}.%(ext)s"
 
     ydl_opts = {
-        "format": "bestaudio/best",
+        "format": "bestaudio",
         "outtmpl": filename,
         "quiet": True,
-        "noplaylist": True
+        "noplaylist": True,
+        "cookiefile": "cookies.txt"
     }
 
     try:
@@ -47,8 +54,7 @@ def download_audio(url):
             if not info:
                 return None
 
-            file = ydl.prepare_filename(info)
-            return file
+            return ydl.prepare_filename(info)
 
     except Exception as e:
         print(e)
