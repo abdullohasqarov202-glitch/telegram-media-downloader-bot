@@ -10,26 +10,33 @@ def download_video(url):
         "outtmpl": filename,
         "noplaylist": True,
         "quiet": True,
-
-        "cookiefile": "cookies.txt",
-
-        "extractor_args": {
-            "youtube": {
-                "player_client": ["android"]
-            }
-        }
+        "cookiefile": "cookies.txt"
     }
 
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=True)
+            return ydl.prepare_filename(info)
+    except Exception as e:
+        print(e)
+        return None
 
-            if not info:
-                return None
 
-            file = ydl.prepare_filename(info)
-            return file
+def download_audio(url):
 
+    filename = f"audio_{uuid.uuid4().hex}.%(ext)s"
+
+    ydl_opts = {
+        "format": "bestaudio/best",
+        "outtmpl": filename,
+        "quiet": True,
+        "cookiefile": "cookies.txt"
+    }
+
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(url, download=True)
+            return ydl.prepare_filename(info)
     except Exception as e:
         print(e)
         return None
