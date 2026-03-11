@@ -28,7 +28,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ]
 
         await update.message.reply_text(
-            "🚫 Botdan foydalanish uchun kanalga obuna bo‘ling",
+            "🚫 Botdan foydalanish uchun kanalga obuna bo‘ling!",
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
         return
@@ -41,8 +41,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ]
 
     await update.message.reply_text(
-        "🤖 Video Yuklab Ber Bot\n\n"
+        "🤖 *VIDEO YUKLAB BER BOT*\n\n"
         "Quyidagidan birini tanlang 👇",
+        parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
 
@@ -87,7 +88,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         await query.edit_message_text(
             "📥 Video link yuboring\n\n"
-            "YouTube / TikTok / Instagram"
+            "YouTube / Instagram / TikTok"
         )
 
 
@@ -96,7 +97,8 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         context.user_data["mode"] = "music"
 
         await query.edit_message_text(
-            "🎵 Qo‘shiq nomini yozing"
+            "🎵 Qo‘shiq nomini yozing\n\n"
+            "Misol:\nAlan Walker Faded"
         )
 
 
@@ -128,6 +130,7 @@ def search_music(query):
         songs = []
 
         for entry in result["entries"]:
+
             songs.append({
                 "title": entry["title"],
                 "url": entry["webpage_url"]
@@ -152,13 +155,13 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
             keyboard.append([
                 InlineKeyboardButton(
-                    s["title"][:40],
+                    f"🎧 {s['title'][:40]}",
                     callback_data=f"song_{s['url']}"
                 )
             ])
 
         await update.message.reply_text(
-            "🎧 Topilgan qo‘shiqlar:",
+            "🎶 Topilgan qo‘shiqlar:\nVariantni tanlang 👇",
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
 
