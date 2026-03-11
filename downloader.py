@@ -33,7 +33,7 @@ def download_audio(url):
     ydl_opts = {
         "format": "bestaudio",
         "outtmpl": filename,
-        "quiet": True,
+        "ffmpeg_location": "/usr/bin/ffmpeg",
         "postprocessors": [{
             "key": "FFmpegExtractAudio",
             "preferredcodec": "mp3",
