@@ -1,100 +1,35 @@
-from telegram import Update, ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton
+import os
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, CallbackQueryHandler, ContextTypes, filters
-
 from downloader import download_video, download_audio
-from search import search_song
-from admin import add_user, get_users
-from config import TOKEN, ADMIN
 
+TOKEN = os.getenv("TOKEN")
 
-menu = ReplyKeyboardMarkup(
-[
-["🎬 Video yuklash"],
-["🎵 Qo‘shiq qidirish"],
-["📊 Statistika"]
-],
-resize_keyboard=True
-)
-
+user_links = {}
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
-    user = update.message.from_user
-
-    add_user(user.id)
-
     await update.message.reply_text(
-        "🔥 ULTRA PRO DOWNLOADER BOT",
-        reply_markup=menu
+        "👋 Salom\n\n"
+        "YouTube / TikTok / Instagram link yuboring."
     )
 
 
-async def message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def link_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
-    text = update.message.text
-    user = update.message.from_user
+    url = update.message.text
+    user_links[update.message.chat_id] = url
 
-
-    if text == "📊 Statistika":
-
-        if user.username == ADMIN:
-
-            users = get_users()
-
-            await update.message.reply_text(
-                f"👥 Users: {len(users)}"
-            )
-
-        return
-
-
-    if text == "🎵 Qo‘shiq qidirish":
-
-        context.user_data["search"] = True
-
-        await update.message.reply_text("🎵 Qo‘shiq nomini yozing")
-
-        return
-
-
-    if context.user_data.get("search"):
-
-        results = search_song(text)
-
-        buttons = []
-
-        for r in results:
-
-            buttons.append([
-                InlineKeyboardButton(
-                    r["title"],
-                    callback_data=f"audio|{r['url']}"
-                )
-            ])
-
-        await update.message.reply_text(
-            "Natijalar:",
-            reply_markup=InlineKeyboardMarkup(buttons)
-        )
-
-        context.user_data["search"] = False
-
-        return
-
-
-    if "http" in text:
-
-        keyboard = InlineKeyboardMarkup([
+    keyboard = [
         [
-        InlineKeyboardButton("🎬 Video", callback_data=f"video|{text}"),
-        InlineKeyboardButton("🎵 MP3", callback_data=f"audio|{text}")
+            InlineKeyboardButton("🎬 Video", callback_data="video"),
+            InlineKeyboardButton("🎵 MP3", callback_data="mp3")
         ]
-        ])
+    ]
 
-        await update.message.reply_text(
-            "Format tanlang",
-            reply_markup=keyboard
-        )
+    await update.message.reply_text(
+        "Format tanlang:",
+        reply_markup=InlineKeyboardMarkup(keyboard)
+    )
 
 
 async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -102,39 +37,39 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
 
-    data = query.data
+    url = user_links.get(query.message.chat_id)
 
-    if "|" not in data:
-        await query.message.reply_text("Xatolik yuz berdi")
-        return
+    if query.data == "video":
 
-    action, url = data.split("|", 1)
-
-
-    if action == "video":
-
-        await query.message.reply_text("🎬 Video yuklanmoqda...")
+        msg = await query.message.reply_text("📥 Yuklanmoqda...")
 
         file = download_video(url)
 
         await query.message.reply_video(open(file, "rb"))
 
+        os.remove(file)
 
-    elif action == "audio":
+        await msg.delete()
 
-        await query.message.reply_text("🎵 MP3 yuklanmoqda...")
+    elif query.data == "mp3":
+
+        msg = await query.message.reply_text("🎵 Yuklanmoqda...")
 
         file = download_audio(url)
 
         await query.message.reply_audio(open(file, "rb"))
 
+        os.remove(file)
+
+        await msg.delete()
+
 
 app = ApplicationBuilder().token(TOKEN).build()
 
 app.add_handler(CommandHandler("start", start))
-app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, message))
+app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, link_handler))
 app.add_handler(CallbackQueryHandler(button))
 
-print("🔥 ULTRA PRO BOT ISHLADI")
+print("🔥 ULTIMATE BOT ISHLADI")
 
 app.run_polling()
