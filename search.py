@@ -1,6 +1,5 @@
 import yt_dlp
 
-
 def search_song(query):
 
     ydl_opts = {
@@ -17,11 +16,11 @@ def search_song(query):
         if "entries" not in info:
             return results
 
-        for video in info["entries"]:
+        for v in info["entries"]:
 
             results.append({
-                "title": video["title"],
-                "url": video["webpage_url"]
+                "title": v["title"],
+                "url": v["webpage_url"]
             })
 
         return results
