@@ -1,5 +1,5 @@
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
+from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, CallbackQueryHandler, filters, ContextTypes
 from downloader import download_video, download_audio
 from config import TOKEN
 
@@ -29,21 +29,59 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ]
 
         await update.message.reply_text(
-            "⚠️ Botdan foydalanish uchun kanalga obuna bo‘ling!\n\n"
+            "🚫 *Botdan foydalanish uchun kanalga obuna bo‘ling!*\n\n"
             "👇 Pastdagi tugma orqali obuna bo‘ling",
+            parse_mode="Markdown",
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
         return
 
     await update.message.reply_text(
-        "🤖 *Video Yuklab Ber Bot*\n\n"
+        "🎬 *Video Yuklab Ber Bot*\n\n"
         "Quyidagi platformalardan yuklab beradi:\n\n"
         "▶️ YouTube\n"
         "📸 Instagram\n"
         "🎵 TikTok\n\n"
-        "📥 Link yuboring!",
+        "📥 *Link yuboring!*",
         parse_mode="Markdown"
     )
+
+
+# TEKSHIRISH TUGMASI
+async def check_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    query = update.callback_query
+    user = query.from_user.id
+    bot = context.bot
+
+    await query.answer()
+
+    if await check_sub(user, bot):
+
+        await query.edit_message_text(
+            "✅ *Rahmat! Siz kanalga obuna bo‘lgansiz*\n\n"
+            "🤖 *Video Yuklab Ber Bot*\n\n"
+            "📥 Endi menga video link yuboring!\n\n"
+            "Qo‘llab-quvvatlanadi:\n"
+            "▶️ YouTube\n"
+            "📸 Instagram\n"
+            "🎵 TikTok",
+            parse_mode="Markdown"
+        )
+
+    else:
+
+        keyboard = [
+            [InlineKeyboardButton("📢 Kanalga obuna bo'lish", url="https://t.me/Asqarov_2007")],
+            [InlineKeyboardButton("🔄 Qayta tekshirish", callback_data="check")]
+        ]
+
+        await query.edit_message_text(
+            "❌ *Siz hali kanalga obuna bo‘lmagansiz!*\n\n"
+            "👇 Obuna bo‘lib qayta tekshiring",
+            parse_mode="Markdown",
+            reply_markup=InlineKeyboardMarkup(keyboard)
+        )
 
 
 # LINK QABUL QILISH
@@ -109,6 +147,7 @@ app = ApplicationBuilder().token(TOKEN).build()
 
 app.add_handler(CommandHandler("start", start))
 app.add_handler(CommandHandler("mp3", mp3))
+app.add_handler(CallbackQueryHandler(check_button))
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_link))
 
 print("Bot ishga tushdi...")
