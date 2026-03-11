@@ -1,6 +1,7 @@
 import yt_dlp
 import uuid
 
+
 def download_video(url):
 
     filename = f"{uuid.uuid4().hex}.%(ext)s"
@@ -10,7 +11,6 @@ def download_video(url):
         "outtmpl": filename,
         "quiet": True,
         "noplaylist": True,
-        "cookiefile": "cookies.txt",
         "http_headers": {
             "User-Agent": "Mozilla/5.0"
         }
@@ -32,7 +32,7 @@ def download_audio(url):
         "outtmpl": filename,
         "quiet": True,
         "noplaylist": True,
-        "cookiefile": "cookies.txt",
+
         "postprocessors": [{
             "key": "FFmpegExtractAudio",
             "preferredcodec": "mp3",
