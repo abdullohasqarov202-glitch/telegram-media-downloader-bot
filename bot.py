@@ -1,11 +1,14 @@
 import yt_dlp
 import uuid
-
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, CallbackQueryHandler, ContextTypes, filters
 
 TOKEN = "8761803905:AAFdKpuvFlMLsfVieetWbAs7MzIp0_5MUCM"
+ADMIN_ID = 123456789
 
+users = set()
+
+# ----------- SEARCH MUSIC -----------
 
 def search_music(query):
 
@@ -17,29 +20,29 @@ def search_music(query):
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
 
         result = ydl.extract_info(
-            f"ytsearch5:{query} music",
+            f"ytsearch5:{query}",
             download=False
         )
 
         songs = []
 
-        for entry in result["entries"]:
-
+        for e in result["entries"]:
             songs.append({
-                "title": entry["title"],
-                "url": entry["webpage_url"]
+                "title": e["title"],
+                "url": e["webpage_url"]
             })
 
         return songs
 
 
+# ----------- DOWNLOAD AUDIO -----------
 
 def download_audio(url):
 
     filename = f"{uuid.uuid4().hex}.mp3"
 
     ydl_opts = {
-        "format": "bestaudio/best",
+        "format": "bestaudio",
         "outtmpl": filename,
         "quiet": True,
         "postprocessors": [{
@@ -55,6 +58,7 @@ def download_audio(url):
     return filename
 
 
+# ----------- DOWNLOAD VIDEO -----------
 
 def download_video(url):
 
@@ -72,36 +76,45 @@ def download_video(url):
     return filename
 
 
+# ----------- START -----------
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
+    user = update.effective_user.id
+    users.add(user)
+
     keyboard = [
-        [
-            InlineKeyboardButton("🎬 Video yuklash", callback_data="video"),
-            InlineKeyboardButton("🎵 Qo‘shiq qidirish", callback_data="music")
-        ]
+        [InlineKeyboardButton("🎵 Qo‘shiq qidirish", callback_data="music")]
     ]
 
     await update.message.reply_text(
-        "🤖 VIDEO YUKLAB BER BOT\n\nBo‘limni tanlang 👇",
+        "🤖 VIDEO & MUSIC BOT\n\n"
+        "Link yuboring yoki qo‘shiq nomini yozing.",
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
 
 
+# ----------- ADMIN PANEL -----------
+
+async def admin(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    if update.effective_user.id != ADMIN_ID:
+        return
+
+    await update.message.reply_text(
+        f"👑 ADMIN PANEL\n\n"
+        f"👤 Foydalanuvchilar: {len(users)}"
+    )
+
+
+# ----------- BUTTON -----------
 
 async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     query = update.callback_query
     await query.answer()
 
-    if query.data == "video":
-
-        context.user_data["mode"] = "video"
-
-        await query.edit_message_text("📥 YouTube link yuboring")
-
-
-    elif query.data == "music":
+    if query.data == "music":
 
         context.user_data["mode"] = "music"
 
@@ -112,7 +125,7 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         index = int(query.data.split("_")[1])
 
-        songs = context.user_data.get("songs")
+        songs = context.user_data["songs"]
 
         url = songs[index]["url"]
 
@@ -125,12 +138,13 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
 
+# ----------- MESSAGE -----------
 
 async def message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     text = update.message.text
 
-
+    # LINK BO‘LSA
     if "http" in text:
 
         msg = await update.message.reply_text("⏳ Video yuklanmoqda...")
@@ -152,6 +166,7 @@ async def message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
 
+    # MUSIC SEARCH
     if context.user_data.get("mode") == "music":
 
         songs = search_music(text)
@@ -175,10 +190,12 @@ async def message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
 
+# ----------- RUN -----------
 
 app = ApplicationBuilder().token(TOKEN).build()
 
 app.add_handler(CommandHandler("start", start))
+app.add_handler(CommandHandler("admin", admin))
 app.add_handler(CallbackQueryHandler(button))
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, message))
 
