@@ -16,7 +16,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ]
 
     await update.message.reply_text(
-        "🤖 Video Yuklab Ber Bot\n\nKerakli bo‘limni tanlang 👇",
+        "🤖 VIDEO YUKLAB BER BOT\n\nBo‘limni tanlang 👇",
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
 
@@ -61,7 +61,6 @@ def search_music(query):
 
     ydl_opts = {
         "quiet": True,
-        "extract_flat": True,
         "skip_download": True
     }
 
@@ -79,8 +78,8 @@ def search_music(query):
             for entry in result["entries"]:
 
                 songs.append({
-                    "title": entry["title"],
-                    "url": f"https://youtube.com/watch?v={entry['id']}"
+                    "title": entry.get("title"),
+                    "url": entry.get("webpage_url")
                 })
 
         return songs
@@ -91,7 +90,7 @@ async def message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
 
 
-    # LINK BO‘LSA
+    # agar link tashlasa
     if "http" in text:
 
         msg = await update.message.reply_text("⏳ Yuklanmoqda...")
@@ -117,6 +116,12 @@ async def message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if mode == "music":
 
         songs = search_music(text)
+
+        if not songs:
+
+            await update.message.reply_text("❌ Qo‘shiq topilmadi")
+            return
+
 
         keyboard = []
 
