@@ -3,13 +3,16 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, CallbackQueryHandler, ContextTypes, filters
 from downloader import download_video, download_audio
 
+
 TOKEN = os.getenv("TOKEN")
 
 user_links = {}
 
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
     await update.message.reply_text(
-        "👋 Salom\n\n"
+        "👋 Salom!\n\n"
         "YouTube / TikTok / Instagram link yuboring."
     )
 
@@ -17,6 +20,14 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def link_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     url = update.message.text
+
+    if "http" not in url:
+
+        await update.message.reply_text(
+            "❌ Iltimos video link yuboring."
+        )
+        return
+
     user_links[update.message.chat_id] = url
 
     keyboard = [
@@ -51,7 +62,7 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         await msg.delete()
 
-    elif query.data == "mp3":
+    if query.data == "mp3":
 
         msg = await query.message.reply_text("🎵 Yuklanmoqda...")
 
@@ -70,6 +81,6 @@ app.add_handler(CommandHandler("start", start))
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, link_handler))
 app.add_handler(CallbackQueryHandler(button))
 
-print("🔥 ULTIMATE BOT ISHLADI")
+print("🔥 BOT ISHLADI")
 
 app.run_polling()
