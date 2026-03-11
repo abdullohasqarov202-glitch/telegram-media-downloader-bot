@@ -4,7 +4,7 @@ import uuid
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, CallbackQueryHandler, ContextTypes, filters
 
-TOKEN = "BOT_TOKEN"
+TOKEN = "8761803905:AAFdKpuvFlMLsfVieetWbAs7MzIp0_5MUCM"
 ADMIN_ID = 123456789
 
 users = set()
