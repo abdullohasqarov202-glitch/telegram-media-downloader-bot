@@ -1,15 +1,16 @@
-from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup
-from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters, CallbackQueryHandler
+from telegram import *
+from telegram.ext import *
 
 from downloader import download_video, download_audio
 from search import search_song
-from config import TOKEN
+from admin import add_user, get_users
+from config import TOKEN, ADMIN
 
 menu = ReplyKeyboardMarkup(
 [
 ["🎬 Video yuklash"],
 ["🎵 Qo‘shiq qidirish"],
-["⬅️ Ortga"]
+["📊 Statistika"]
 ],
 resize_keyboard=True
 )
@@ -17,8 +18,12 @@ resize_keyboard=True
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
+    user = update.message.from_user
+
+    add_user(user.id)
+
     await update.message.reply_text(
-        "🔥 MEGA DOWNLOADER BOT",
+        "🔥 ULTRA PRO DOWNLOADER BOT",
         reply_markup=menu
     )
 
@@ -26,14 +31,19 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     text = update.message.text
+    user = update.message.from_user
 
 
-    if text == "⬅️ Ortga":
+    if text == "📊 Statistika":
 
-        await update.message.reply_text(
-            "Bosh menyu",
-            reply_markup=menu
-        )
+        if user.username == ADMIN:
+
+            users = get_users()
+
+            await update.message.reply_text(
+                f"👥 Users: {len(users)}"
+            )
+
         return
 
 
@@ -41,9 +51,8 @@ async def message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         context.user_data["search"] = True
 
-        await update.message.reply_text(
-            "Qo‘shiq nomini yozing"
-        )
+        await update.message.reply_text("Qo‘shiq nomi yozing")
+
         return
 
 
@@ -51,22 +60,13 @@ async def message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         results = search_song(text)
 
-        if not results:
-
-            await update.message.reply_text("Topilmadi")
-            return
-
-
         buttons = []
 
         for r in results:
 
-            buttons.append([
-                InlineKeyboardButton(
-                    r["title"],
-                    callback_data=r["url"]
-                )
-            ])
+            buttons.append(
+                [InlineKeyboardButton(r["title"], callback_data=r["url"])]
+            )
 
         await update.message.reply_text(
             "Natijalar:",
@@ -80,25 +80,47 @@ async def message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if "http" in text:
 
-        await update.message.reply_text("Video yuklanmoqda...")
+        keyboard = InlineKeyboardMarkup([
+        [
+        InlineKeyboardButton("🎬 Video",callback_data=f"video|{text}"),
+        InlineKeyboardButton("🎵 MP3",callback_data=f"audio|{text}")
+        ]
+        ])
 
-        video = download_video(text)
-
-        await update.message.reply_video(video=open(video,"rb"))
+        await update.message.reply_text(
+            "Format tanlang",
+            reply_markup=keyboard
+        )
 
 
 async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     query = update.callback_query
+
     await query.answer()
 
-    url = query.data
+    data = query.data.split("|")
 
-    await query.message.reply_text("Qo‘shiq yuklanmoqda...")
+    action = data[0]
+    url = data[1]
 
-    audio = download_audio(url)
 
-    await query.message.reply_audio(audio=open(audio,"rb"))
+    if action == "video":
+
+        await query.message.reply_text("Video yuklanmoqda...")
+
+        file = download_video(url)
+
+        await query.message.reply_video(open(file,"rb"))
+
+
+    if action == "audio":
+
+        await query.message.reply_text("MP3 yuklanmoqda...")
+
+        file = download_audio(url)
+
+        await query.message.reply_audio(open(file,"rb"))
 
 
 app = ApplicationBuilder().token(TOKEN).build()
@@ -107,6 +129,6 @@ app.add_handler(CommandHandler("start", start))
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, message))
 app.add_handler(CallbackQueryHandler(button))
 
-print("MEGA BOT ISHLADI")
+print("ULTRA PRO BOT ISHLADI")
 
-app.run_polling(drop_pending_updates=True)
+app.run_polling()
