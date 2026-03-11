@@ -1,11 +1,9 @@
 import os
-
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters
 
 from downloader import download_video, download_audio
 from config import TOKEN, ADMIN_USERNAME
-
 
 users_file = "users.txt"
 
@@ -19,7 +17,6 @@ def add_user(user_id):
         users = f.read().splitlines()
 
     if str(user_id) not in users:
-
         with open(users_file, "a") as f:
             f.write(str(user_id) + "\n")
 
@@ -38,7 +35,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     add_user(update.effective_user.id)
 
     await update.message.reply_text(
-        "🔥 SUPER DOWNLOADER BOT\n\n"
+        "🔥 PROFESSIONAL DOWNLOADER BOT\n\n"
         "Link yuboring:\n"
         "YouTube / Instagram / TikTok"
     )
@@ -66,13 +63,12 @@ async def broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
     users = get_users()
 
     for u in users:
-
         try:
             await context.bot.send_message(u, text)
         except:
             pass
 
-    await update.message.reply_text("✅ Yuborildi")
+    await update.message.reply_text("✅ Xabar yuborildi")
 
 
 async def message(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -108,7 +104,7 @@ async def message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
             await msg.delete()
 
-    except Exception as e:
+    except Exception:
 
         await update.message.reply_text(
             "❌ Yuklab bo‘lmadi.\n"
@@ -123,6 +119,6 @@ app.add_handler(CommandHandler("admin", admin))
 app.add_handler(CommandHandler("broadcast", broadcast))
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, message))
 
-print("SUPER BOT ISHLADI")
+print("PROFESSIONAL BOT ISHLADI")
 
 app.run_polling(drop_pending_updates=True)
