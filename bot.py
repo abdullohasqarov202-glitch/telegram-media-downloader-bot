@@ -66,10 +66,13 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await query.message.reply_text("❌ Yuklab bo‘lmadi")
 
 
+
+
 def search_music(query):
 
     ydl_opts = {
         "quiet": True,
+        "extract_flat": True,
         "skip_download": True
     }
 
@@ -88,11 +91,14 @@ def search_music(query):
 
                 songs.append({
                     "title": entry["title"],
-                    "url": entry["webpage_url"],
-                    "thumb": entry["thumbnail"]
+                    "url": f"https://youtube.com/watch?v={entry['id']}"
                 })
 
         return songs
+
+
+
+
 
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
