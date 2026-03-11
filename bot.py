@@ -5,33 +5,8 @@ import yt_dlp
 from downloader import download_video, download_audio
 from config import TOKEN
 
-CHANNEL = "@Asqarov_2007"
-
-
-async def check_sub(user_id, bot):
-    try:
-        member = await bot.get_chat_member(CHANNEL, user_id)
-        return member.status in ["member", "administrator", "creator"]
-    except:
-        return False
-
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
-    user = update.effective_user.id
-
-    if not await check_sub(user, context.bot):
-
-        keyboard = [
-            [InlineKeyboardButton("📢 Kanalga obuna bo'lish", url="https://t.me/Asqarov_2007")],
-            [InlineKeyboardButton("✅ Tekshirish", callback_data="check")]
-        ]
-
-        await update.message.reply_text(
-            "🚫 Botdan foydalanish uchun kanalga obuna bo‘ling!",
-            reply_markup=InlineKeyboardMarkup(keyboard)
-        )
-        return
 
     keyboard = [
         [
@@ -53,42 +28,13 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
 
-    if query.data == "check":
-
-        if await check_sub(query.from_user.id, context.bot):
-
-            keyboard = [
-                [
-                    InlineKeyboardButton("🎬 Video yuklash", callback_data="video"),
-                    InlineKeyboardButton("🎵 Qo‘shiq qidirish", callback_data="music")
-                ]
-            ]
-
-            await query.edit_message_text(
-                "✅ Endi foydalanishingiz mumkin",
-                reply_markup=InlineKeyboardMarkup(keyboard)
-            )
-
-        else:
-
-            keyboard = [
-                [InlineKeyboardButton("📢 Kanalga obuna bo'lish", url="https://t.me/Asqarov_2007")],
-                [InlineKeyboardButton("🔄 Tekshirish", callback_data="check")]
-            ]
-
-            await query.edit_message_text(
-                "❌ Avval kanalga obuna bo‘ling",
-                reply_markup=InlineKeyboardMarkup(keyboard)
-            )
-
-
-    elif query.data == "video":
+    if query.data == "video":
 
         context.user_data["mode"] = "video"
 
         await query.edit_message_text(
             "📥 Video link yuboring\n\n"
-            "YouTube / Instagram / TikTok"
+            "YouTube / TikTok / Instagram"
         )
 
 
@@ -98,7 +44,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         await query.edit_message_text(
             "🎵 Qo‘shiq nomini yozing\n\n"
-            "Misol:\nAlan Walker Faded"
+            "Masalan:\nAlan Walker Faded"
         )
 
 
@@ -111,7 +57,11 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         audio = download_audio(url)
 
         if audio:
-            await query.message.reply_audio(audio=open(audio, "rb"))
+
+            await query.message.reply_audio(
+                audio=open(audio, "rb")
+            )
+
         else:
             await query.message.reply_text("❌ Yuklab bo‘lmadi")
 
@@ -125,16 +75,22 @@ def search_music(query):
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
 
-        result = ydl.extract_info(f"ytsearch5:{query}", download=False)
+        result = ydl.extract_info(
+            f"ytsearch5:{query}",
+            download=False
+        )
 
         songs = []
 
-        for entry in result["entries"]:
+        if "entries" in result:
 
-            songs.append({
-                "title": entry["title"],
-                "url": entry["webpage_url"]
-            })
+            for entry in result["entries"]:
+
+                songs.append({
+                    "title": entry["title"],
+                    "url": entry["webpage_url"],
+                    "thumb": entry["thumbnail"]
+                })
 
         return songs
 
@@ -142,33 +98,9 @@ def search_music(query):
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     text = update.message.text
-    mode = context.user_data.get("mode")
 
-
-    if mode == "music":
-
-        songs = search_music(text)
-
-        keyboard = []
-
-        for s in songs:
-
-            keyboard.append([
-                InlineKeyboardButton(
-                    f"🎧 {s['title'][:40]}",
-                    callback_data=f"song_{s['url']}"
-                )
-            ])
-
-        await update.message.reply_text(
-            "🎶 Topilgan qo‘shiqlar:\nVariantni tanlang 👇",
-            reply_markup=InlineKeyboardMarkup(keyboard)
-        )
-
-        return
-
-
-    if mode == "video":
+    # LINK BO‘LSA
+    if "http" in text:
 
         msg = await update.message.reply_text("⏳ Yuklanmoqda...")
 
@@ -176,10 +108,48 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         if video:
             await update.message.reply_video(video=open(video, "rb"))
-        else:
-            await update.message.reply_text("❌ Video yuklab bo‘lmadi")
+
+        audio = download_audio(text)
+
+        if audio:
+            await update.message.reply_audio(audio=open(audio, "rb"))
 
         await msg.delete()
+
+        return
+
+
+    mode = context.user_data.get("mode")
+
+
+    if mode == "music":
+
+        songs = search_music(text)
+
+        if not songs:
+
+            await update.message.reply_text("❌ Qo‘shiq topilmadi")
+            return
+
+
+        keyboard = []
+
+        for s in songs:
+
+            keyboard.append([
+                InlineKeyboardButton(
+                    f"🎧 {s['title'][:35]}",
+                    callback_data=f"song_{s['url']}"
+                )
+            ])
+
+
+        # rasm bilan chiqaradi
+        await update.message.reply_photo(
+            photo=songs[0]["thumb"],
+            caption="🎶 Topilgan qo‘shiqlar:",
+            reply_markup=InlineKeyboardMarkup(keyboard)
+        )
 
 
 app = ApplicationBuilder().token(TOKEN).build()
