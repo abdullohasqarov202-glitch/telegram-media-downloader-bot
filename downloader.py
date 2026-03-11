@@ -11,6 +11,7 @@ def download_video(url):
         "outtmpl": filename,
         "quiet": True,
         "noplaylist": True,
+
         "http_headers": {
             "User-Agent": "Mozilla/5.0"
         }
@@ -29,6 +30,7 @@ def download_audio(url):
     ydl_opts = {
         "format": "bestaudio/best",
         "outtmpl": filename,
+
         "postprocessors": [{
             "key": "FFmpegExtractAudio",
             "preferredcodec": "mp3",
