@@ -32,32 +32,24 @@ def download_video(url):
 
 def download_audio(url):
 
-    filename = f"audio_{uuid.uuid4().hex}.mp3"
+    filename = "audio.%(ext)s"
 
     ydl_opts = {
         "format": "bestaudio",
         "outtmpl": filename,
         "quiet": True,
-        "noplaylist": True,
-
+        "ffmpeg_location": "/usr/bin/ffmpeg",
         "postprocessors": [{
             "key": "FFmpegExtractAudio",
             "preferredcodec": "mp3",
-            "preferredquality": "192"
+            "preferredquality": "192",
         }]
     }
 
-    try:
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        ydl.download([url])
 
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-
-            info = ydl.extract_info(url, download=True)
-
-            if not info:
-                return None
-
-            return filename
-
+    return "audio.mp3"
     except Exception as e:
         print(e)
         return None
