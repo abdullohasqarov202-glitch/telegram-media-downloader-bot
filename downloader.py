@@ -12,13 +12,18 @@ def download_video(url):
         "quiet": True,
         "noplaylist": True,
 
+        "cookiefile": "cookies.txt",
+
         "http_headers": {
             "User-Agent": "Mozilla/5.0"
         },
 
+        "geo_bypass": True,
+        "nocheckcertificate": True,
+
         "extractor_args": {
             "youtube": {
-                "player_client": ["android"]
+                "player_client": ["android", "ios", "web"]
             }
         }
     }
@@ -39,13 +44,18 @@ def download_audio(url):
         "quiet": True,
         "noplaylist": True,
 
+        "cookiefile": "cookies.txt",
+
         "http_headers": {
             "User-Agent": "Mozilla/5.0"
         },
 
+        "geo_bypass": True,
+        "nocheckcertificate": True,
+
         "extractor_args": {
             "youtube": {
-                "player_client": ["android"]
+                "player_client": ["android", "ios", "web"]
             }
         },
 
