@@ -3,7 +3,7 @@ from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, Cal
 import yt_dlp
 
 from downloader import download_video, download_audio
-from config import TOKEN
+from config import ABDULLOH
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
