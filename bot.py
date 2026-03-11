@@ -37,12 +37,12 @@ async def admin(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
-    text = update.message.text
+    text = update.message.text.lower()
 
 
     if "youtube.com" in text or "youtu.be" in text:
 
-        msg = await update.message.reply_text("⏳ Yuklanmoqda...")
+        msg = await update.message.reply_text("⏳ Video yuklanmoqda...")
 
         video = download_video(text)
 
@@ -63,7 +63,7 @@ async def message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if "instagram.com" in text or "tiktok.com" in text:
 
-        msg = await update.message.reply_text("⏳ Yuklanmoqda...")
+        msg = await update.message.reply_text("⏳ Video yuklanmoqda...")
 
         video = download_video(text)
 
@@ -72,8 +72,6 @@ async def message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
         await msg.delete()
-
-        return
 
 
 app = ApplicationBuilder().token(TOKEN).build()
