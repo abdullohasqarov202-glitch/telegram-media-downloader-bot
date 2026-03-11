@@ -4,52 +4,44 @@ import uuid
 
 def download_video(url):
 
-    filename = f"video_{uuid.uuid4().hex}.%(ext)s"
+    filename = f"{uuid.uuid4().hex}.mp4"
 
     ydl_opts = {
         "format": "best",
         "outtmpl": filename,
         "quiet": True,
-        "noplaylist": True
+        "http_headers": {
+            "User-Agent": "Mozilla/5.0"
+        },
+        "extractor_args": {
+            "youtube": {
+                "player_client": ["android"]
+            }
+        }
     }
 
-    try:
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        ydl.download([url])
 
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-
-            info = ydl.extract_info(url, download=True)
-
-            if not info:
-                return None
-
-            return ydl.prepare_filename(info)
-
-    except Exception as e:
-        print(e)
-        return None
-
+    return filename
 
 
 def download_audio(url):
 
-    filename = "audio.%(ext)s"
+    filename = f"{uuid.uuid4().hex}.mp3"
 
     ydl_opts = {
         "format": "bestaudio",
         "outtmpl": filename,
         "quiet": True,
-        "ffmpeg_location": "/usr/bin/ffmpeg",
         "postprocessors": [{
             "key": "FFmpegExtractAudio",
             "preferredcodec": "mp3",
-            "preferredquality": "192",
+            "preferredquality": "192"
         }]
     }
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         ydl.download([url])
 
-    return "audio.mp3"
-    except Exception as e:
-        print(e)
-        return None
+    return filename
