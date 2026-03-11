@@ -11,7 +11,6 @@ def download_video(url):
         "outtmpl": filename,
         "quiet": True,
         "noplaylist": True,
-
         "http_headers": {
             "User-Agent": "Mozilla/5.0"
         }
