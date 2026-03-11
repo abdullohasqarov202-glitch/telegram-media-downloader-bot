@@ -1,14 +1,36 @@
 import yt_dlp
 import uuid
+
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, CallbackQueryHandler, ContextTypes, filters
 
-TOKEN = "8761803905:AAFdKpuvFlMLsfVieetWbAs7MzIp0_5MUCM"
+TOKEN = "BOT_TOKEN"
 ADMIN_ID = 123456789
 
 users = set()
 
-# ----------- SEARCH MUSIC -----------
+# -------- MENU --------
+
+def main_menu():
+
+    keyboard = [
+        [InlineKeyboardButton("🎵 Qo‘shiq qidirish", callback_data="music")],
+        [InlineKeyboardButton("📥 Video yuklash", callback_data="video")]
+    ]
+
+    return InlineKeyboardMarkup(keyboard)
+
+
+def back_menu():
+
+    keyboard = [
+        [InlineKeyboardButton("⬅️ Qaytish", callback_data="back")]
+    ]
+
+    return InlineKeyboardMarkup(keyboard)
+
+
+# -------- SEARCH MUSIC --------
 
 def search_music(query):
 
@@ -27,6 +49,7 @@ def search_music(query):
         songs = []
 
         for e in result["entries"]:
+
             songs.append({
                 "title": e["title"],
                 "url": e["webpage_url"]
@@ -35,7 +58,7 @@ def search_music(query):
         return songs
 
 
-# ----------- DOWNLOAD AUDIO -----------
+# -------- DOWNLOAD AUDIO --------
 
 def download_audio(url):
 
@@ -58,7 +81,7 @@ def download_audio(url):
     return filename
 
 
-# ----------- DOWNLOAD VIDEO -----------
+# -------- DOWNLOAD VIDEO --------
 
 def download_video(url):
 
@@ -76,25 +99,19 @@ def download_video(url):
     return filename
 
 
-# ----------- START -----------
+# -------- START --------
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
-    user = update.effective_user.id
-    users.add(user)
-
-    keyboard = [
-        [InlineKeyboardButton("🎵 Qo‘shiq qidirish", callback_data="music")]
-    ]
+    users.add(update.effective_user.id)
 
     await update.message.reply_text(
-        "🤖 VIDEO & MUSIC BOT\n\n"
-        "Link yuboring yoki qo‘shiq nomini yozing.",
-        reply_markup=InlineKeyboardMarkup(keyboard)
+        "🤖 VIDEO & MUSIC BOT\n\nBo‘limni tanlang 👇",
+        reply_markup=main_menu()
     )
 
 
-# ----------- ADMIN PANEL -----------
+# -------- ADMIN --------
 
 async def admin(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
@@ -102,12 +119,11 @@ async def admin(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     await update.message.reply_text(
-        f"👑 ADMIN PANEL\n\n"
-        f"👤 Foydalanuvchilar: {len(users)}"
+        f"👑 ADMIN PANEL\n\n👤 Foydalanuvchilar: {len(users)}"
     )
 
 
-# ----------- BUTTON -----------
+# -------- BUTTON --------
 
 async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
@@ -118,7 +134,30 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         context.user_data["mode"] = "music"
 
-        await query.edit_message_text("🎵 Qo‘shiq nomini yozing")
+        await query.edit_message_text(
+            "🎵 Qo‘shiq nomini yozing",
+            reply_markup=back_menu()
+        )
+
+
+    elif query.data == "video":
+
+        context.user_data["mode"] = "video"
+
+        await query.edit_message_text(
+            "📥 YouTube link yuboring",
+            reply_markup=back_menu()
+        )
+
+
+    elif query.data == "back":
+
+        context.user_data.clear()
+
+        await query.edit_message_text(
+            "🏠 Asosiy menyu",
+            reply_markup=main_menu()
+        )
 
 
     elif query.data.startswith("song_"):
@@ -138,14 +177,14 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
 
-# ----------- MESSAGE -----------
+# -------- MESSAGE --------
 
 async def message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     text = update.message.text
 
-    # LINK BO‘LSA
-    if "http" in text:
+
+    if context.user_data.get("mode") == "video":
 
         msg = await update.message.reply_text("⏳ Video yuklanmoqda...")
 
@@ -166,7 +205,6 @@ async def message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
 
-    # MUSIC SEARCH
     if context.user_data.get("mode") == "music":
 
         songs = search_music(text)
@@ -184,13 +222,15 @@ async def message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 )
             ])
 
+        keyboard.append([InlineKeyboardButton("⬅️ Qaytish", callback_data="back")])
+
         await update.message.reply_text(
             "🎧 Topilgan qo‘shiqlar:",
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
 
 
-# ----------- RUN -----------
+# -------- RUN --------
 
 app = ApplicationBuilder().token(TOKEN).build()
 
