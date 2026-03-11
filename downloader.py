@@ -5,9 +5,7 @@ import uuid
 def fix_url(url):
 
     if "youtube.com/shorts/" in url:
-
         video_id = url.split("shorts/")[1].split("?")[0]
-
         return f"https://www.youtube.com/watch?v={video_id}"
 
     return url
@@ -20,7 +18,7 @@ def download_video(url):
     filename = f"{uuid.uuid4().hex}.mp4"
 
     ydl_opts = {
-        "format": "bv*[ext=mp4]+ba[ext=m4a]/b[ext=mp4]",
+        "format": "best",
         "outtmpl": filename,
         "quiet": True,
 
@@ -38,7 +36,6 @@ def download_video(url):
     }
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-
         ydl.download([url])
 
     return filename
@@ -63,7 +60,6 @@ def download_audio(url):
     }
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-
         ydl.download([url])
 
     return filename
