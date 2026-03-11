@@ -1,18 +1,16 @@
 Telegram PRO Downloader Bot
 
-Platforms:
-YouTube
-Instagram
-TikTok
-
 Functions:
-Video download
-MP3 download
 
-Install:
+YouTube video download
+YouTube MP3
+Instagram video
+TikTok video
 
-pip install -r requirements.txt
+Deploy:
 
-Run:
+1 Upload to GitHub
+2 Connect GitHub to Railway
+3 Start command:
 
 python bot.py
