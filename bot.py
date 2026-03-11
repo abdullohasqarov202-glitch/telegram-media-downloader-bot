@@ -1,5 +1,5 @@
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, CallbackQueryHandler, filters, ContextTypes
+from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, CallbackQueryHandler, ContextTypes, filters
 import yt_dlp
 
 from downloader import download_video, download_audio
@@ -16,14 +16,12 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ]
 
     await update.message.reply_text(
-        "🤖 *VIDEO YUKLAB BER BOT*\n\n"
-        "Quyidagidan birini tanlang 👇",
-        parse_mode="Markdown",
+        "🤖 Video Yuklab Ber Bot\n\nKerakli bo‘limni tanlang 👇",
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
 
 
-async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     query = update.callback_query
     await query.answer()
@@ -33,20 +31,16 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         context.user_data["mode"] = "video"
 
         await query.edit_message_text(
-            "📥 Video link yuboring\n\n"
-            "YouTube / TikTok / Instagram"
+            "📥 Video link yuboring"
         )
-
 
     elif query.data == "music":
 
         context.user_data["mode"] = "music"
 
         await query.edit_message_text(
-            "🎵 Qo‘shiq nomini yozing\n\n"
-            "Masalan:\nAlan Walker Faded"
+            "🎵 Qo‘shiq nomini yozing"
         )
-
 
     elif query.data.startswith("song_"):
 
@@ -61,11 +55,6 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await query.message.reply_audio(
                 audio=open(audio, "rb")
             )
-
-        else:
-            await query.message.reply_text("❌ Yuklab bo‘lmadi")
-
-
 
 
 def search_music(query):
@@ -97,13 +86,10 @@ def search_music(query):
         return songs
 
 
-
-
-
-
-async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     text = update.message.text
+
 
     # LINK BO‘LSA
     if "http" in text:
@@ -132,28 +118,19 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         songs = search_music(text)
 
-        if not songs:
-
-            await update.message.reply_text("❌ Qo‘shiq topilmadi")
-            return
-
-
         keyboard = []
 
         for s in songs:
 
             keyboard.append([
                 InlineKeyboardButton(
-                    f"🎧 {s['title'][:35]}",
+                    s["title"][:40],
                     callback_data=f"song_{s['url']}"
                 )
             ])
 
-
-        # rasm bilan chiqaradi
-        await update.message.reply_photo(
-            photo=songs[0]["thumb"],
-            caption="🎶 Topilgan qo‘shiqlar:",
+        await update.message.reply_text(
+            "🎧 Topilgan qo‘shiqlar:",
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
 
@@ -161,8 +138,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 app = ApplicationBuilder().token(TOKEN).build()
 
 app.add_handler(CommandHandler("start", start))
-app.add_handler(CallbackQueryHandler(buttons))
-app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+app.add_handler(CallbackQueryHandler(button))
+app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, message))
 
 print("Bot ishga tushdi...")
 
