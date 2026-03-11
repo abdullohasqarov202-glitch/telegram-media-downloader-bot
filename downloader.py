@@ -1,19 +1,14 @@
 import yt_dlp
 import uuid
 
-
 def download_video(url):
 
     filename = f"{uuid.uuid4().hex}.mp4"
 
     ydl_opts = {
-        "format": "best",
+        "format": "bestvideo+bestaudio",
         "outtmpl": filename,
-        "quiet": True,
-        "noplaylist": True,
-        "http_headers": {
-            "User-Agent": "Mozilla/5.0"
-        }
+        "quiet": True
     }
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -27,7 +22,7 @@ def download_audio(url):
     filename = f"{uuid.uuid4().hex}.mp3"
 
     ydl_opts = {
-        "format": "bestaudio/best",
+        "format": "bestaudio",
         "outtmpl": filename,
 
         "postprocessors": [{
