@@ -15,22 +15,20 @@ def search_music(query):
     }
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-
         result = ydl.extract_info(
-            f"ytsearch5:{query} audio",
+            f"ytsearch5:{query} music",
             download=False
         )
 
-        songs = []
+        return result["entries"]
 
-        for entry in result["entries"]:
 
-            songs.append({
-                "title": entry.get("title"),
-                "url": entry.get("webpage_url")
-            })
 
-        return songs
+
+
+
+
+
 
 
 
