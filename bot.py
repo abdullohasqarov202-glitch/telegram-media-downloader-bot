@@ -1,9 +1,75 @@
+import yt_dlp
+import uuid
+
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, CallbackQueryHandler, ContextTypes, filters
-import yt_dlp
 
-from downloader import download_video, download_audio
-from config import ABDULLOH
+TOKEN = "BOT_TOKENINGIZ"
+
+
+def search_music(query):
+
+    ydl_opts = {
+        "quiet": True,
+        "skip_download": True
+    }
+
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+
+        result = ydl.extract_info(
+            f"ytsearch5:{query} audio",
+            download=False
+        )
+
+        songs = []
+
+        for entry in result["entries"]:
+
+            songs.append({
+                "title": entry.get("title"),
+                "url": entry.get("webpage_url")
+            })
+
+        return songs
+
+
+
+def download_audio(url):
+
+    filename = f"{uuid.uuid4().hex}.mp3"
+
+    ydl_opts = {
+        "format": "bestaudio",
+        "outtmpl": filename,
+        "quiet": True,
+        "postprocessors": [{
+            "key": "FFmpegExtractAudio",
+            "preferredcodec": "mp3"
+        }]
+    }
+
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        ydl.download([url])
+
+    return filename
+
+
+
+def download_video(url):
+
+    filename = f"{uuid.uuid4().hex}.mp4"
+
+    ydl_opts = {
+        "format": "best",
+        "outtmpl": filename,
+        "quiet": True
+    }
+
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        ydl.download([url])
+
+    return filename
+
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -21,6 +87,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
+
 async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     query = update.callback_query
@@ -30,59 +97,24 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         context.user_data["mode"] = "video"
 
-        await query.edit_message_text(
-            "📥 Video link yuboring"
-        )
+        await query.edit_message_text("📥 YouTube link yuboring")
 
     elif query.data == "music":
 
         context.user_data["mode"] = "music"
 
-        await query.edit_message_text(
-            "🎵 Qo‘shiq nomini yozing"
-        )
+        await query.edit_message_text("🎵 Qo‘shiq nomini yozing")
 
     elif query.data.startswith("song_"):
 
         url = query.data.replace("song_", "")
 
-        await query.edit_message_text("⏳ Yuklanmoqda...")
+        await query.edit_message_text("⏳ MP3 yuklanmoqda...")
 
         audio = download_audio(url)
 
-        if audio:
+        await query.message.reply_audio(audio=open(audio, "rb"))
 
-            await query.message.reply_audio(
-                audio=open(audio, "rb")
-            )
-
-
-def search_music(query):
-
-    ydl_opts = {
-        "quiet": True,
-        "skip_download": True
-    }
-
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-
-        result = ydl.extract_info(
-            f"ytsearch5:{query}",
-            download=False
-        )
-
-        songs = []
-
-        if "entries" in result:
-
-            for entry in result["entries"]:
-
-                songs.append({
-                    "title": entry.get("title"),
-                    "url": entry.get("webpage_url")
-                })
-
-        return songs
 
 
 async def message(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -90,38 +122,26 @@ async def message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
 
 
-    # agar link tashlasa
     if "http" in text:
 
-        msg = await update.message.reply_text("⏳ Yuklanmoqda...")
+        msg = await update.message.reply_text("⏳ Video yuklanmoqda...")
 
         video = download_video(text)
 
-        if video:
-            await update.message.reply_video(video=open(video, "rb"))
+        await update.message.reply_video(video=open(video, "rb"))
 
         audio = download_audio(text)
 
-        if audio:
-            await update.message.reply_audio(audio=open(audio, "rb"))
+        await update.message.reply_audio(audio=open(audio, "rb"))
 
         await msg.delete()
 
         return
 
 
-    mode = context.user_data.get("mode")
-
-
-    if mode == "music":
+    if context.user_data.get("mode") == "music":
 
         songs = search_music(text)
-
-        if not songs:
-
-            await update.message.reply_text("❌ Qo‘shiq topilmadi")
-            return
-
 
         keyboard = []
 
@@ -140,12 +160,13 @@ async def message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
 
+
 app = ApplicationBuilder().token(TOKEN).build()
 
 app.add_handler(CommandHandler("start", start))
 app.add_handler(CallbackQueryHandler(button))
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, message))
 
-print("Bot ishga tushdi...")
+print("BOT ISHLADI")
 
 app.run_polling()
