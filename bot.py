@@ -1,10 +1,11 @@
-from telegram import *
-from telegram.ext import *
+from telegram import Update, ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton
+from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, CallbackQueryHandler, ContextTypes, filters
 
 from downloader import download_video, download_audio
 from search import search_song
 from admin import add_user, get_users
 from config import TOKEN, ADMIN
+
 
 menu = ReplyKeyboardMarkup(
 [
@@ -51,7 +52,7 @@ async def message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         context.user_data["search"] = True
 
-        await update.message.reply_text("Qo‘shiq nomi yozing")
+        await update.message.reply_text("🎵 Qo‘shiq nomini yozing")
 
         return
 
@@ -64,9 +65,12 @@ async def message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         for r in results:
 
-            buttons.append(
-                [InlineKeyboardButton(r["title"], callback_data=r["url"])]
-            )
+            buttons.append([
+                InlineKeyboardButton(
+                    r["title"],
+                    callback_data=f"audio|{r['url']}"
+                )
+            ])
 
         await update.message.reply_text(
             "Natijalar:",
@@ -82,8 +86,8 @@ async def message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         keyboard = InlineKeyboardMarkup([
         [
-        InlineKeyboardButton("🎬 Video",callback_data=f"video|{text}"),
-        InlineKeyboardButton("🎵 MP3",callback_data=f"audio|{text}")
+        InlineKeyboardButton("🎬 Video", callback_data=f"video|{text}"),
+        InlineKeyboardButton("🎵 MP3", callback_data=f"audio|{text}")
         ]
         ])
 
@@ -96,31 +100,33 @@ async def message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     query = update.callback_query
-
     await query.answer()
 
-    data = query.data.split("|")
+    data = query.data
 
-    action = data[0]
-    url = data[1]
+    if "|" not in data:
+        await query.message.reply_text("Xatolik yuz berdi")
+        return
+
+    action, url = data.split("|", 1)
 
 
     if action == "video":
 
-        await query.message.reply_text("Video yuklanmoqda...")
+        await query.message.reply_text("🎬 Video yuklanmoqda...")
 
         file = download_video(url)
 
-        await query.message.reply_video(open(file,"rb"))
+        await query.message.reply_video(open(file, "rb"))
 
 
-    if action == "audio":
+    elif action == "audio":
 
-        await query.message.reply_text("MP3 yuklanmoqda...")
+        await query.message.reply_text("🎵 MP3 yuklanmoqda...")
 
         file = download_audio(url)
 
-        await query.message.reply_audio(open(file,"rb"))
+        await query.message.reply_audio(open(file, "rb"))
 
 
 app = ApplicationBuilder().token(TOKEN).build()
@@ -129,6 +135,6 @@ app.add_handler(CommandHandler("start", start))
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, message))
 app.add_handler(CallbackQueryHandler(button))
 
-print("ULTRA PRO BOT ISHLADI")
+print("🔥 ULTRA PRO BOT ISHLADI")
 
 app.run_polling()
