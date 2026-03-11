@@ -4,7 +4,7 @@ import uuid
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, CallbackQueryHandler, ContextTypes, filters
 
-TOKEN = "BOT_TOKENINGIZ"
+TOKEN = "ABDULLOH"
 
 
 def search_music(query):
