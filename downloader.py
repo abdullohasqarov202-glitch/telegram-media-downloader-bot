@@ -6,9 +6,20 @@ def download_video(url):
     filename = f"{uuid.uuid4().hex}.mp4"
 
     ydl_opts = {
-        "format": "bestvideo+bestaudio",
+        "format": "best",
         "outtmpl": filename,
-        "quiet": True
+        "quiet": True,
+        "noplaylist": True,
+
+        "http_headers": {
+            "User-Agent": "Mozilla/5.0"
+        },
+
+        "extractor_args": {
+            "youtube": {
+                "player_client": ["android"]
+            }
+        }
     }
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -22,8 +33,18 @@ def download_audio(url):
     filename = f"{uuid.uuid4().hex}.mp3"
 
     ydl_opts = {
-        "format": "bestaudio",
+        "format": "bestaudio/best",
         "outtmpl": filename,
+
+        "http_headers": {
+            "User-Agent": "Mozilla/5.0"
+        },
+
+        "extractor_args": {
+            "youtube": {
+                "player_client": ["android"]
+            }
+        },
 
         "postprocessors": [{
             "key": "FFmpegExtractAudio",
