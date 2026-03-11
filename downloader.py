@@ -10,9 +10,7 @@ def download_video(url):
         "format": "best",
         "outtmpl": filename,
         "quiet": True,
-        "noplaylist": True,
-        "nocheckcertificate": True,
-        "ignoreerrors": True
+        "noplaylist": True
     }
 
     try:
