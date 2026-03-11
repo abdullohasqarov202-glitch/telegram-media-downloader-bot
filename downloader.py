@@ -11,9 +11,6 @@ def download_video(url):
         "outtmpl": filename,
         "quiet": True,
         "noplaylist": True,
-        "http_headers": {
-            "User-Agent": "Mozilla/5.0"
-        }
     }
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -28,15 +25,14 @@ def download_audio(url):
     filename = f"{uuid.uuid4().hex}.%(ext)s"
 
     ydl_opts = {
-        "format": "bestaudio",
+        "format": "bestaudio/best",
         "outtmpl": filename,
         "quiet": True,
-        "noplaylist": True,
 
         "postprocessors": [{
             "key": "FFmpegExtractAudio",
             "preferredcodec": "mp3",
-            "preferredquality": "192"
+            "preferredquality": "192",
         }]
     }
 
@@ -44,4 +40,4 @@ def download_audio(url):
         info = ydl.extract_info(url)
         file = ydl.prepare_filename(info)
 
-    return file
+    return file.replace(".webm", ".mp3").replace(".m4a", ".mp3")
