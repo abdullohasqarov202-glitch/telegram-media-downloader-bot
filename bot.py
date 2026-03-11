@@ -15,20 +15,22 @@ def search_music(query):
     }
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+
         result = ydl.extract_info(
             f"ytsearch5:{query} music",
             download=False
         )
 
-        return result["entries"]
+        songs = []
 
+        for entry in result["entries"]:
 
+            songs.append({
+                "title": entry["title"],
+                "url": entry["webpage_url"]
+            })
 
-
-
-
-
-
+        return songs
 
 
 
@@ -37,12 +39,13 @@ def download_audio(url):
     filename = f"{uuid.uuid4().hex}.mp3"
 
     ydl_opts = {
-        "format": "bestaudio",
+        "format": "bestaudio/best",
         "outtmpl": filename,
         "quiet": True,
         "postprocessors": [{
             "key": "FFmpegExtractAudio",
-            "preferredcodec": "mp3"
+            "preferredcodec": "mp3",
+            "preferredquality": "192"
         }]
     }
 
@@ -97,21 +100,29 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         await query.edit_message_text("📥 YouTube link yuboring")
 
+
     elif query.data == "music":
 
         context.user_data["mode"] = "music"
 
         await query.edit_message_text("🎵 Qo‘shiq nomini yozing")
 
+
     elif query.data.startswith("song_"):
 
-        url = query.data.replace("song_", "")
+        index = int(query.data.split("_")[1])
+
+        songs = context.user_data.get("songs")
+
+        url = songs[index]["url"]
 
         await query.edit_message_text("⏳ MP3 yuklanmoqda...")
 
         audio = download_audio(url)
 
-        await query.message.reply_audio(audio=open(audio, "rb"))
+        await query.message.reply_audio(
+            audio=open(audio, "rb")
+        )
 
 
 
@@ -126,11 +137,15 @@ async def message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         video = download_video(text)
 
-        await update.message.reply_video(video=open(video, "rb"))
+        await update.message.reply_video(
+            video=open(video, "rb")
+        )
 
         audio = download_audio(text)
 
-        await update.message.reply_audio(audio=open(audio, "rb"))
+        await update.message.reply_audio(
+            audio=open(audio, "rb")
+        )
 
         await msg.delete()
 
@@ -141,14 +156,16 @@ async def message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         songs = search_music(text)
 
+        context.user_data["songs"] = songs
+
         keyboard = []
 
-        for s in songs:
+        for i, s in enumerate(songs):
 
             keyboard.append([
                 InlineKeyboardButton(
                     s["title"][:40],
-                    callback_data=f"song_{s['url']}"
+                    callback_data=f"song_{i}"
                 )
             ])
 
