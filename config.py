@@ -1,2 +1,2 @@
 TOKEN = "8761803905:AAFdKpuvFlMLsfVieetWbAs7MzIp0_5MUCM"
-ADMIN = "Asqarov_0207"
+CHANNEL = "@Asqarov_2007"
