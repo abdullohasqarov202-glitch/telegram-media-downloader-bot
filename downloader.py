@@ -1,9 +1,13 @@
 import yt_dlp
+import uuid
 
 def download_video(url):
+
+    filename = f"video_{uuid.uuid4().hex}.%(ext)s"
+
     ydl_opts = {
         "format": "bv*+ba/b",
-        "outtmpl": "video.%(ext)s",
+        "outtmpl": filename,
         "merge_output_format": "mp4"
     }
 
@@ -13,9 +17,12 @@ def download_video(url):
 
 
 def download_audio(url):
+
+    filename = f"audio_{uuid.uuid4().hex}.%(ext)s"
+
     ydl_opts = {
         "format": "bestaudio/best",
-        "outtmpl": "audio.%(ext)s",
+        "outtmpl": filename,
         "postprocessors": [{
             "key": "FFmpegExtractAudio",
             "preferredcodec": "mp3",
@@ -26,30 +33,4 @@ def download_audio(url):
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=True)
 
-    return "audio.mp3"
-
-
-def download_audio(url):
-
-    filename = f"audio_{uuid.uuid4().hex}.%(ext)s"
-
-    ydl_opts = {
-        "format": "bestaudio",
-        "outtmpl": filename,
-        "quiet": True,
-        "noplaylist": True,
-        "cookiefile": "cookies.txt"
-    }
-
-    try:
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(url, download=True)
-
-            if not info:
-                return None
-
-            return ydl.prepare_filename(info)
-
-    except Exception as e:
-        print(e)
-        return None
+    return filename.replace("%(ext)s", "mp3")
