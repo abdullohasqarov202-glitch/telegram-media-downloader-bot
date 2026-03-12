@@ -31,6 +31,6 @@ def download_audio(url):
     }
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        info = ydl.extract_info(url, download=True)
+        ydl.extract_info(url, download=True)
 
     return filename.replace("%(ext)s", "mp3")
