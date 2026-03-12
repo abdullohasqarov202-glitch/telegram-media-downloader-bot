@@ -1,12 +1,20 @@
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+import os
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
 from downloader import download_video, download_audio
-from config import TOKEN
+from config import TOKEN, CHANNEL
 
-CHANNEL = "@Asqarov_2007"
+users = set()
+
+menu = ReplyKeyboardMarkup(
+    [
+        ["🎬 Video yuklash"],
+        ["🎵 MP3 yuklash"]
+    ],
+    resize_keyboard=True
+)
 
 
-# OBUNA TEKSHIRISH
 async def check_sub(user_id, bot):
     try:
         member = await bot.get_chat_member(CHANNEL, user_id)
@@ -15,101 +23,94 @@ async def check_sub(user_id, bot):
         return False
 
 
-# START
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     user = update.effective_user.id
-    bot = context.bot
+    users.add(user)
 
-    if not await check_sub(user, bot):
+    if not await check_sub(user, context.bot):
 
         keyboard = [
-            [InlineKeyboardButton("📢 Kanalga obuna bo'lish", url="https://t.me/Asqarov_2007")],
-            [InlineKeyboardButton("✅ Tekshirish", callback_data="check")]
+            [InlineKeyboardButton("📢 Kanalga obuna", url=f"https://t.me/{CHANNEL.replace('@','')}")],
         ]
 
         await update.message.reply_text(
-            "⚠️ Botdan foydalanish uchun kanalga obuna bo‘ling!\n\n"
-            "👇 Pastdagi tugma orqali obuna bo‘ling",
+            "❗ Botdan foydalanish uchun kanalga obuna bo‘ling",
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
         return
 
     await update.message.reply_text(
         "🤖 *Video Yuklab Ber Bot*\n\n"
-        "Quyidagi platformalardan yuklab beradi:\n\n"
-        "▶️ YouTube\n"
-        "📸 Instagram\n"
-        "🎵 TikTok\n\n"
-        "📥 Link yuboring!",
-        parse_mode="Markdown"
+        "📥 Link yuboring\n\n"
+        "Platformalar:\n"
+        "YouTube\n"
+        "TikTok\n"
+        "Instagram",
+        parse_mode="Markdown",
+        reply_markup=menu
     )
 
 
-# LINK QABUL QILISH
-async def handle_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     user = update.effective_user.id
-    bot = context.bot
+    text = update.message.text
 
-    if not await check_sub(user, bot):
-        await update.message.reply_text(
-            "❌ Avval kanalga obuna bo‘ling:\n"
-            "👉 https://t.me/Asqarov_2007"
-        )
+    if not await check_sub(user, context.bot):
+        await update.message.reply_text("❌ Avval kanalga obuna bo‘ling")
         return
 
-    url = update.message.text
+    if text.startswith("http"):
 
-    msg = await update.message.reply_text("⏳ Yuklanmoqda...")
+        msg = await update.message.reply_text("⏳ Yuklanmoqda...")
 
-    video_file = download_video(url)
+        video = download_video(text)
 
-    if video_file:
-        await update.message.reply_video(video=open(video_file, "rb"))
-    else:
-        await update.message.reply_text("❌ Video yuklab bo‘lmadi")
-        return
+        if video:
+            await update.message.reply_video(video=open(video, "rb"))
+        else:
+            await update.message.reply_text("❌ Video yuklanmadi")
+            return
 
-    audio_file = download_audio(url)
+        audio = download_audio(text)
 
-    if audio_file:
-        await update.message.reply_audio(audio=open(audio_file, "rb"))
-    else:
-        await update.message.reply_text("❌ MP3 yuklab bo‘lmadi")
+        if audio:
+            await update.message.reply_audio(audio=open(audio, "rb"))
 
-    await msg.delete()
+        await msg.delete()
 
 
-# MP3 COMMAND
 async def mp3(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if not context.args:
-        await update.message.reply_text(
-            "❗ Link yozing\n\n"
-            "Misol:\n"
-            "/mp3 https://youtube.com/..."
-        )
+        await update.message.reply_text("❗ /mp3 link yozing")
         return
 
     url = context.args[0]
 
-    await update.message.reply_text("🎵 MP3 tayyorlanmoqda...")
+    msg = await update.message.reply_text("🎵 MP3 tayyorlanmoqda...")
 
-    audio_file = download_audio(url)
+    audio = download_audio(url)
 
-    if audio_file:
-        await update.message.reply_audio(audio=open(audio_file, "rb"))
+    if audio:
+        await update.message.reply_audio(audio=open(audio, "rb"))
     else:
-        await update.message.reply_text("❌ MP3 yuklab bo‘lmadi")
+        await update.message.reply_text("❌ MP3 yuklanmadi")
+
+    await msg.delete()
 
 
-# APPLICATION
+async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text(f"👥 Foydalanuvchilar: {len(users)}")
+
+
 app = ApplicationBuilder().token(TOKEN).build()
 
 app.add_handler(CommandHandler("start", start))
 app.add_handler(CommandHandler("mp3", mp3))
-app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_link))
+app.add_handler(CommandHandler("stats", stats))
+app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
 print("Bot ishga tushdi...")
 
