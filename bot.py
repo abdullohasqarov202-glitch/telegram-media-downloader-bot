@@ -1,86 +1,116 @@
-import os
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, CallbackQueryHandler, ContextTypes, filters
+from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
 from downloader import download_video, download_audio
+from config import TOKEN
+
+CHANNEL = "@Asqarov_2007"
 
 
-TOKEN = os.getenv("TOKEN")
+# OBUNA TEKSHIRISH
+async def check_sub(user_id, bot):
+    try:
+        member = await bot.get_chat_member(CHANNEL, user_id)
+        return member.status in ["member", "administrator", "creator"]
+    except:
+        return False
 
-user_links = {}
 
-
+# START
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
-    await update.message.reply_text(
-        "👋 Salom!\n\n"
-        "YouTube / TikTok / Instagram link yuboring."
-    )
+    user = update.effective_user.id
+    bot = context.bot
 
+    if not await check_sub(user, bot):
 
-async def link_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
-    url = update.message.text
-
-    if "http" not in url:
+        keyboard = [
+            [InlineKeyboardButton("📢 Kanalga obuna bo'lish", url="https://t.me/Asqarov_2007")],
+            [InlineKeyboardButton("✅ Tekshirish", callback_data="check")]
+        ]
 
         await update.message.reply_text(
-            "❌ Iltimos video link yuboring."
+            "⚠️ Botdan foydalanish uchun kanalga obuna bo‘ling!\n\n"
+            "👇 Pastdagi tugma orqali obuna bo‘ling",
+            reply_markup=InlineKeyboardMarkup(keyboard)
         )
         return
 
-    user_links[update.message.chat_id] = url
-
-    keyboard = [
-        [
-            InlineKeyboardButton("🎬 Video", callback_data="video"),
-            InlineKeyboardButton("🎵 MP3", callback_data="mp3")
-        ]
-    ]
-
     await update.message.reply_text(
-        "Format tanlang:",
-        reply_markup=InlineKeyboardMarkup(keyboard)
+        "🤖 *Video Yuklab Ber Bot*\n\n"
+        "Quyidagi platformalardan yuklab beradi:\n\n"
+        "▶️ YouTube\n"
+        "📸 Instagram\n"
+        "🎵 TikTok\n\n"
+        "📥 Link yuboring!",
+        parse_mode="Markdown"
     )
 
 
-async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
+# LINK QABUL QILISH
+async def handle_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
-    query = update.callback_query
-    await query.answer()
+    user = update.effective_user.id
+    bot = context.bot
 
-    url = user_links.get(query.message.chat_id)
+    if not await check_sub(user, bot):
+        await update.message.reply_text(
+            "❌ Avval kanalga obuna bo‘ling:\n"
+            "👉 https://t.me/Asqarov_2007"
+        )
+        return
 
-    if query.data == "video":
+    url = update.message.text
 
-        msg = await query.message.reply_text("📥 Yuklanmoqda...")
+    msg = await update.message.reply_text("⏳ Yuklanmoqda...")
 
-        file = download_video(url)
+    video_file = download_video(url)
 
-        await query.message.reply_video(open(file, "rb"))
+    if video_file:
+        await update.message.reply_video(video=open(video_file, "rb"))
+    else:
+        await update.message.reply_text("❌ Video yuklab bo‘lmadi")
+        return
 
-        os.remove(file)
+    audio_file = download_audio(url)
 
-        await msg.delete()
+    if audio_file:
+        await update.message.reply_audio(audio=open(audio_file, "rb"))
+    else:
+        await update.message.reply_text("❌ MP3 yuklab bo‘lmadi")
 
-    if query.data == "mp3":
-
-        msg = await query.message.reply_text("🎵 Yuklanmoqda...")
-
-        file = download_audio(url)
-
-        await query.message.reply_audio(open(file, "rb"))
-
-        os.remove(file)
-
-        await msg.delete()
+    await msg.delete()
 
 
+# MP3 COMMAND
+async def mp3(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    if not context.args:
+        await update.message.reply_text(
+            "❗ Link yozing\n\n"
+            "Misol:\n"
+            "/mp3 https://youtube.com/..."
+        )
+        return
+
+    url = context.args[0]
+
+    await update.message.reply_text("🎵 MP3 tayyorlanmoqda...")
+
+    audio_file = download_audio(url)
+
+    if audio_file:
+        await update.message.reply_audio(audio=open(audio_file, "rb"))
+    else:
+        await update.message.reply_text("❌ MP3 yuklab bo‘lmadi")
+
+
+# APPLICATION
 app = ApplicationBuilder().token(TOKEN).build()
 
 app.add_handler(CommandHandler("start", start))
-app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, link_handler))
-app.add_handler(CallbackQueryHandler(button))
+app.add_handler(CommandHandler("mp3", mp3))
+app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_link))
 
-print("🔥 BOT ISHLADI")
+print("Bot ishga tushdi...")
 
 app.run_polling()
