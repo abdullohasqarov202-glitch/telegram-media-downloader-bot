@@ -1,61 +1,34 @@
 import yt_dlp
-import uuid
 
 def download_video(url):
 
-    filename = f"video_{uuid.uuid4().hex}.%(ext)s"
-
     ydl_opts = {
-        "format": "best",
-        "outtmpl": filename,
-        "quiet": True,
-        "noplaylist": True,
-        "nocheckcertificate": True,
-        "ignoreerrors": True,
-        "cookiefile": "cookies.txt",
-
-        "extractor_args": {
-            "youtube": {
-                "player_client": ["android"]
-            }
-        }
+        'format': 'best',
+        'outtmpl': 'video.%(ext)s'
     }
 
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=True)
-
-            if not info:
-                return None
-
             return ydl.prepare_filename(info)
-
-    except Exception as e:
-        print(e)
+    except:
         return None
 
 
 def download_audio(url):
 
-    filename = f"audio_{uuid.uuid4().hex}.%(ext)s"
-
     ydl_opts = {
-        "format": "bestaudio",
-        "outtmpl": filename,
-        "quiet": True,
-        "noplaylist": True,
-        "cookiefile": "cookies.txt"
+        'format': 'bestaudio/best',
+        'outtmpl': 'audio.%(ext)s',
+        'postprocessors': [{
+            'key': 'FFmpegExtractAudio',
+            'preferredcodec': 'mp3'
+        }]
     }
 
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=True)
-
-            if not info:
-                return None
-
-            return ydl.prepare_filename(info)
-
-    except Exception as e:
-        print(e)
+            return ydl.prepare_filename(info).replace(".webm", ".mp3")
+    except:
         return None
