@@ -26,7 +26,7 @@ user_mode = {}
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = (
-        "🚀 <b>🚀 Video Savee UZ Bot</b>\n\n"
+        "🚀 <b>🚀 Video Savee UZ Bot </b>\n\n"
         "✅ YouTube\n"
         "✅ Instagram\n"
         "✅ TikTok\n\n"
@@ -98,6 +98,6 @@ app = ApplicationBuilder().token(TOKEN).build()
 app.add_handler(CommandHandler("start", start))
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
-print("🚀 PRO DOWNLOADER BOT ISHLADI")
+print("🚀  Video Savee UZ Bot ISHLADI")
 
 app.run_polling()
