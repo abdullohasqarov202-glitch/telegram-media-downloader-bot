@@ -1,44 +1,37 @@
-from telegram import (
-    Update,
-    ReplyKeyboardMarkup,
-    InlineKeyboardMarkup,
-    InlineKeyboardButton,
+import os
+from telegram import Update, ReplyKeyboardMarkup
+from telegram.ext import (
+    ApplicationBuilder,
+    CommandHandler,
+    MessageHandler,
+    ContextTypes,
+    filters,
 )
+
+from downloader import download_video, download_audio
+
+TOKEN = os.getenv("TOKEN")
+
+menu = ReplyKeyboardMarkup(
+    [
+        ["🎬 Video yuklash", "🎵 MP3 yuklash"],
+        ["ℹ️ Yordam"]
+    ],
+    resize_keyboard=True,
+)
+
+# Foydalanuvchi tanlagan rejim
+user_mode = {}
+
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
-    keyboard = InlineKeyboardMarkup([
-        [
-            InlineKeyboardButton("📢 Kanal", url="https://t.me/Asqarov_2007"),
-            InlineKeyboardButton("👨‍💻 Admin", url="https://t.me/Asqarov_0207"),
-        ]
-    ])
-
-    text = f"""
-<b>╔══════════════════════╗
-🚀 PRO DOWNLOADER BOT
-╚══════════════════════╝</b>
-
-🎬 <b>YouTube</b>
-📸 <b>Instagram</b>
-🎵 <b>TikTok</b>
-📘 <b>Facebook</b>
-
-━━━━━━━━━━━━━━━━━━
-
-✨ <b>Imkoniyatlar</b>
-
-🎥 HD Video
-🎵 MP3 Audio
-⚡ Juda tez yuklash
-🌍 100+ sayt qo'llab-quvvatlanadi
-
-━━━━━━━━━━━━━━━━━━
-
-👤 <b>Ism:</b> {update.effective_user.first_name}
-🆔 <b>ID:</b> <code>{update.effective_user.id}</code>
-
-👇 <b>Kerakli bo'limni tanlang.</b>
-"""
+    text = (
+        "🚀 <b>PRO DOWNLOADER BOT</b>\n\n"
+        "✅ YouTube\n"
+        "✅ Instagram\n"
+        "✅ TikTok\n\n"
+        "Kerakli bo'limni tanlang 👇"
+    )
 
     await update.message.reply_text(
         text,
@@ -46,9 +39,65 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup=menu,
     )
 
-    await update.message.reply_text(
-        "💎 Premium xizmatlardan foydalanish uchun quyidagilardan birini tanlang:",
-        reply_markup=keyboard,
-    )
-    msg = await update.message.reply_text("⏳ Yuklab olinmoqda...\n\n█░░░░░░░░░ 10%")
-    await msg.edit_text("✅ Yuklab olindi!\n📤 Fayl yuborilmoqda...")
+
+async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    text = update.message.text
+
+    # Tugmalar
+    if text == "🎬 Video yuklash":
+        user_mode[update.effective_user.id] = "video"
+        await update.message.reply_text(
+            "📎 Video havolasini yuboring."
+        )
+        return
+
+    if text == "🎵 MP3 yuklash":
+        user_mode[update.effective_user.id] = "audio"
+        await update.message.reply_text(
+            "🎵 Qo'shiq yoki video havolasini yuboring."
+        )
+        return
+
+    if text == "ℹ️ Yordam":
+        await update.message.reply_text(
+            "Instagram, TikTok yoki YouTube linkini yuboring."
+        )
+        return
+
+    # Link emas
+    if not text.startswith(("http://", "https://")):
+        await update.message.reply_text(
+            "❌ Iltimos, havola yuboring."
+        )
+        return
+
+    try:
+        await update.message.reply_text("⏳ Yuklab olinmoqda...")
+
+        mode = user_mode.get(update.effective_user.id, "video")
+
+        if mode == "audio":
+            file = download_audio(text)
+            with open(file, "rb") as f:
+                await update.message.reply_audio(f)
+        else:
+            file = download_video(text)
+            with open(file, "rb") as f:
+                await update.message.reply_video(f)
+
+    except Exception as e:
+        print(e)
+        await update.message.reply_text(
+            "❌ Yuklab bo'lmadi."
+        )
+
+
+app = ApplicationBuilder().token(TOKEN).build()
+
+app.add_handler(CommandHandler("start", start))
+app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+
+print("🚀 PRO DOWNLOADER BOT ISHLADI")
+
+app.run_polling()
