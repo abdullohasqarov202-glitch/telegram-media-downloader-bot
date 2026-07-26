@@ -26,7 +26,7 @@ user_mode = {}
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = (
-        "🚀 <b>🚀 Video Savee UZ Bot </b>\n\n"
+        "🚀 <b> Video Savee UZ Bot </b>\n\n"
         "✅ YouTube\n"
         "✅ Instagram\n"
         "✅ TikTok\n\n"
